@@ -1,0 +1,484 @@
+import java.awt.*; 
+
+import java.awt.event.*;
+
+import java.util.ArrayList; 
+
+import java.util.HashMap;
+
+public class NewsPortal extends Frame implements ActionListener {
+
+// Components for Login
+
+TextField usernameField, passwordField; 
+
+Button loginButton, registerButton;
+
+static ArrayList<User> userList = new ArrayList<>();
+
+static HashMap<String, ArrayList<Article>> articles = new HashMap<>(); 
+
+static ArrayList<Article> deletedArticles = new ArrayList<>();
+
+static User loggedInUser = null;
+
+// Main Method
+
+public static void main(String[] args) {
+
+userList.add(new User("admin", "admin123", true)); // Default admin user
+
+// Pre-populate categories 
+
+articles.put("Sports", new ArrayList<>());
+
+articles.put("Entertainment", new ArrayList<>()); 
+
+articles.put("Technology", new ArrayList<>()); 
+
+articles.put("Politics", new ArrayList<>()); 
+
+articles.put("Normal News", new ArrayList<>());
+
+new NewsPortal();
+
+}
+
+// Constructor for Login Frame 
+
+NewsPortal() {
+
+setLayout(new FlowLayout());
+setTitle("News Portal Login");
+
+add(new Label("Username:")); 
+
+usernameField = new TextField(20); 
+
+add(usernameField);
+
+add(new Label("Password:"));
+
+passwordField = new TextField(20); 
+
+passwordField.setEchoChar('*'); 
+
+add(passwordField);
+
+loginButton = new Button("Login"); 
+
+registerButton = new Button("Register"); 
+
+add(loginButton);
+
+add(registerButton);
+
+loginButton.addActionListener(this); 
+
+registerButton.addActionListener(e -> new RegistrationWindow());
+
+setSize(300, 200); 
+
+setVisible(true);
+
+}
+
+// Handle Login
+
+public void actionPerformed(ActionEvent e) {
+
+String username = usernameField.getText();
+
+String password = passwordField.getText();
+
+for (User user : userList) {
+
+if (user.getUsername().equals(username) && user.getPassword().equals(password)) { 
+
+loggedInUser = user;
+
+dispose();
+
+if (user.isAdmin()) {
+openAdminPortal();
+
+} else {
+
+openUserPortal();
+
+}
+
+return;
+
+}
+
+}
+
+new MessageWindow("Invalid credentials!");
+
+}
+
+// Admin Portal
+
+void openAdminPortal() {
+
+Frame adminFrame = new Frame("Admin Portal"); 
+
+adminFrame.setLayout(new BorderLayout());
+
+List categoryList = new List();
+
+TextArea articleDisplay = new TextArea();
+
+Button viewArticlesButton = new Button("View Articles"); 
+
+Button addArticleButton = new Button("Add Article");
+
+Button logoutButton = new Button("Logout");
+
+// Populate category list 
+
+articles.keySet().forEach(categoryList::add);
+
+// View Articles Button Logic 
+
+viewArticlesButton.addActionListener(e -> {
+
+String selectedCategory = categoryList.getSelectedItem(); 
+
+articleDisplay.setText("");
+
+if (selectedCategory != null && articles.containsKey(selectedCategory)) { 
+
+for (Article article : articles.get(selectedCategory)) {
+articleDisplay.append("Title: " + article.getTitle() + "\n");
+articleDisplay.append("Content: " + article.getContent() + "\n\n");
+
+}
+
+} else {
+
+articleDisplay.append("No articles in this category.");
+
+}
+
+});
+
+// Add Article Button Logic
+
+addArticleButton.addActionListener(e -> new AddArticleWindow());
+
+// Logout Button Logic 
+
+logoutButton.addActionListener(e -> {
+
+adminFrame.dispose(); 
+
+new NewsPortal();
+
+});
+
+Panel adminPanel = new Panel(new GridLayout(1, 2)); 
+
+adminPanel.add(categoryList); 
+
+adminPanel.add(articleDisplay);
+
+Panel buttonPanel = new Panel(); 
+
+buttonPanel.add(viewArticlesButton); 
+
+buttonPanel.add(addArticleButton); 
+
+buttonPanel.add(logoutButton);
+
+adminFrame.add(adminPanel, BorderLayout.CENTER); 
+
+adminFrame.add(buttonPanel, BorderLayout.SOUTH);
+
+adminFrame.setSize(600, 400); 
+
+adminFrame.setVisible(true);
+}
+// User Portal
+
+void openUserPortal() {
+
+Frame userFrame = new Frame("User Portal"); 
+
+userFrame.setLayout(new BorderLayout());
+
+List categoryList = new List();
+
+TextArea articleDisplay = new TextArea(); 
+
+Button logoutButton = new Button("Logout");
+
+articles.keySet().forEach(categoryList::add); 
+
+categoryList.addItemListener(e -> {
+
+String selectedCategory = categoryList.getSelectedItem(); 
+
+articleDisplay.setText("");
+
+if (articles.containsKey(selectedCategory)) {
+
+for (Article article : articles.get(selectedCategory)) { 
+
+articleDisplay.append("Title: " + article.getTitle() + "\n"); 
+
+articleDisplay.append("Content: " + article.getContent() + "\n\n");
+
+}
+
+} else {
+
+articleDisplay.append("No articles in this category.");
+
+}
+
+});
+
+logoutButton.addActionListener(e -> { 
+
+userFrame.dispose();
+
+new NewsPortal();
+
+});
+
+userFrame.add(categoryList, BorderLayout.WEST);
+userFrame.add(articleDisplay, BorderLayout.CENTER);
+userFrame.add(logoutButton, BorderLayout.SOUTH);
+
+userFrame.setSize(600, 400); 
+
+userFrame.setVisible(true);
+
+}
+
+// Registration Window
+
+class RegistrationWindow extends Frame { 
+
+TextField regUsernameField, regPasswordField; 
+
+Button submitButton, cancelButton;
+
+RegistrationWindow() { 
+
+setLayout(new FlowLayout()); 
+
+setTitle("Register New User");
+
+add(new Label("Username:")); 
+
+regUsernameField = new TextField(20); 
+
+add(regUsernameField);
+
+add(new Label("Password:")); 
+
+regPasswordField = new TextField(20); 
+
+regPasswordField.setEchoChar('*'); 
+
+add(regPasswordField);
+
+submitButton = new Button("Register"); 
+
+cancelButton = new Button("Cancel");
+
+add(submitButton); 
+
+add(cancelButton);
+
+submitButton.addActionListener(e -> {
+
+String username = regUsernameField.getText();
+String password = regPasswordField.getText();
+if (!isValidInput(username) || !isValidInput(password)) {
+
+new MessageWindow("Special characters are not allowed in username or 
+
+password!");
+
+return;
+
+}
+
+if (!username.isEmpty() && !password.isEmpty()) { 
+
+userList.add(new User(username, password, false));
+
+new MessageWindow("Registration successful!"); 
+
+dispose();
+
+} else {
+
+new MessageWindow("Please enter all fields.");
+
+}
+
+});
+
+cancelButton.addActionListener(e -> dispose()); 
+
+setSize(300, 200);
+
+setVisible(true);
+
+}
+
+}
+
+// Add Article Window
+
+class AddArticleWindow extends Frame { 
+
+TextField titleField, categoryField;
+
+TextArea contentArea;
+
+Button submitButton, cancelButton;
+
+AddArticleWindow() { 
+
+setLayout(new FlowLayout());
+setTitle("Add Article");
+add(new Label("Title:"));
+
+titleField = new TextField(20); 
+
+add(titleField);
+
+add(new Label("Category:")); 
+
+categoryField = new TextField(20); 
+
+add(categoryField);
+
+add(new Label("Content:")); 
+
+contentArea = new TextArea(5, 20); 
+
+add(contentArea);
+
+submitButton = new Button("Submit");
+
+cancelButton = new Button("Cancel");
+
+add(submitButton);
+
+add(cancelButton);
+
+submitButton.addActionListener(e -> { 
+
+String title = titleField.getText();
+
+String category = categoryField.getText(); 
+
+String content = contentArea.getText();
+
+if (!title.isEmpty() && !category.isEmpty() && !content.isEmpty()) { 
+
+articles.putIfAbsent(category, new ArrayList<>()); 
+
+articles.get(category).add(new Article(title, category, content)); 
+
+new MessageWindow("Article added successfully!");
+
+dispose();
+
+} else {
+
+new MessageWindow("All fields are required!");
+}
+});
+
+cancelButton.addActionListener(e -> dispose());
+
+setSize(400, 300); 
+
+setVisible(true);
+
+}
+
+}
+
+// Message Window
+
+class MessageWindow extends Frame {
+
+MessageWindow(String message) { 
+
+setLayout(new FlowLayout()); 
+
+add(new Label(message));
+
+Button closeButton = new Button("Close"); 
+
+closeButton.addActionListener(e -> dispose()); 
+
+add(closeButton);
+
+setSize(250, 100); 
+
+setVisible(true);
+
+}
+
+}
+
+// Utility method to check for special characters 
+
+boolean isValidInput(String input) {
+
+return !input.matches(".[!@#$%^&(),.?\":{}|<>].*");
+
+}
+
+}
+
+// User class 
+
+class User {
+
+private String username;
+
+private String password; 
+
+private boolean isAdmin;
+this.username
+private String category; 
+
+private String content;
+
+public Article(String title, String category, String content) { 
+
+this.title = title;
+
+this.category = category; 
+
+this.content = content;
+public String getTitle() {
+
+return title;
+
+}
+
+public String getCategory() { 
+
+return category;
+
+}
+
+public String getContent() { 
+
+return content;
+
+}
+
+}
